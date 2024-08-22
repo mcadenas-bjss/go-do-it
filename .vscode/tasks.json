@@ -1,0 +1,14 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "go",
+      "label": "go: test package",
+      "command": "test",
+      "args": ["${fileDirname}"],
+      "problemMatcher": ["$go"],
+      "group": "test",
+      "detail": "cd /Users/Mauricio.Cadenas/Documents/Git/Bench/GoAcademy; go test ${fileDirname}"
+    }
+  ]
+}

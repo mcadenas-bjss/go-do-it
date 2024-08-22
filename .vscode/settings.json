@@ -1,0 +1,6 @@
+{
+  "cSpell.words": ["todos"],
+  "triggerTaskOnSave.tasks": {
+    "go: test package": ["*_test.go"]
+  }
+}
