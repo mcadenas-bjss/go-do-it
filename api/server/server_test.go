@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,13 +18,34 @@ type StubStore struct {
 	todos map[int]store.Todo
 }
 
-func (s *StubStore) Get(id int) (store.Todo, error) {
-	todo, ok := s.todos[id]
-	if !ok {
-		return store.Todo{}, errors.New("Row not found")
-	}
+func (s *StubStore) Get(ctx context.Context, id int) (store.Todo, error) {
+	data := make(chan store.Todo, 1)
+	e := make(chan error, 1)
 
-	return todo, nil
+	go func() {
+		var result store.Todo
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			if t, ok := s.todos[id]; !ok {
+				e <- errors.New("todo not found")
+				return
+			} else {
+				result = t
+			}
+		}
+		data <- result
+	}()
+
+	select {
+	case <-ctx.Done():
+		return store.Todo{}, ctx.Err()
+	case todo := <-data:
+		return todo, nil
+	case err := <-e:
+		return store.Todo{}, err
+	}
 }
 
 func (s *StubStore) All() ([]store.Todo, error) {
@@ -35,10 +57,10 @@ func (s *StubStore) All() ([]store.Todo, error) {
 	return v, nil
 }
 
-func (s *StubStore) Insert(todo store.Todo) error {
-
-	s.todos[len(s.todos)+1] = todo
-	return nil
+func (s *StubStore) Insert(todo store.Todo) (int, error) {
+	newId := len(s.todos) + 1
+	s.todos[newId] = todo
+	return newId, nil
 }
 
 func (s *StubStore) Update(id int, todo store.Todo) (bool, error) {
@@ -80,7 +102,7 @@ func TestCRUD(t *testing.T) {
 	todoServer := server.NewTodoServer(&stubStore)
 
 	t.Run("Get existing todo", func(t *testing.T) {
-		request, _ := http.NewRequest("GET", fmt.Sprintf("/todo/%d", 1), nil)
+		request := NewGetTodoRequest(1)
 		response := httptest.NewRecorder()
 
 		todoServer.ServeHTTP(response, request)
@@ -91,18 +113,16 @@ func TestCRUD(t *testing.T) {
 	})
 
 	t.Run("Get non existing todo", func(t *testing.T) {
-		request, _ := http.NewRequest("GET", fmt.Sprintf("/todo/%d", 3), nil)
+		request := NewGetTodoRequest(3)
 		response := httptest.NewRecorder()
 
 		todoServer.ServeHTTP(response, request)
 
-		var got store.Todo
-		assertJson(t, response.Body, &got)
 		assertStatus(t, response.Code, http.StatusNotFound)
 	})
 
 	t.Run("Get all returns array with items", func(t *testing.T) {
-		request, _ := http.NewRequest("GET", "/todos/", nil)
+		request, _ := http.NewRequest("GET", "/todos", nil)
 		response := httptest.NewRecorder()
 
 		todoServer.ServeHTTP(response, request)
@@ -120,7 +140,7 @@ func TestCRUD(t *testing.T) {
 		emptyServer := server.NewTodoServer(&StubStore{
 			make(map[int]store.Todo),
 		})
-		request, _ := http.NewRequest("GET", "/todos/", nil)
+		request, _ := http.NewRequest("GET", "/todos", nil)
 		response := httptest.NewRecorder()
 
 		emptyServer.ServeHTTP(response, request)
@@ -135,7 +155,7 @@ func TestCRUD(t *testing.T) {
 	})
 
 	t.Run("Insert", func(t *testing.T) {
-		request, _ := http.NewRequest("POST", "/todo/", bytes.NewBufferString(`{"description": "Buy eggs", "completed": false}`))
+		request := NewPostTodoRequest(store.Todo{Id: 3, Time: "2024-01-01T00:00:00.000Z", Description: "Buy butter", Completed: false})
 		response := httptest.NewRecorder()
 
 		todoServer.ServeHTTP(response, request)
@@ -148,6 +168,18 @@ func TestCRUD(t *testing.T) {
 	})
 }
 
+func NewPostTodoRequest(todo store.Todo) *http.Request {
+	buff := bytes.Buffer{}
+	json.NewEncoder(&buff).Encode(todo)
+	req, _ := http.NewRequest(http.MethodPost, "/todo", &buff)
+	return req
+}
+
+func NewGetTodoRequest(id int) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/todo/%d", id), nil)
+	return req
+}
+
 func assertStatus(t testing.TB, got, want int) {
 	t.Helper()
 	if got != want {
@@ -158,7 +190,9 @@ func assertStatus(t testing.TB, got, want int) {
 func assertJson[T any](t testing.TB, j *bytes.Buffer, got T) {
 	t.Helper()
 
-	err := json.NewDecoder(j).Decode(&got)
+	dec := json.NewDecoder(j)
+	dec.DisallowUnknownFields()
+	err := dec.Decode(&got)
 	if err != nil {
 		t.Fatalf("Unable to parse response from server %q into Todo, '%v'", j, err)
 	}
