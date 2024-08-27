@@ -14,7 +14,7 @@ import (
 	"github.com/mcadenas-bjss/go-do-it/api/store"
 )
 
-const testDbFile = "../test_db.db"
+const testDbFile = "test_db.db"
 
 func TestInsertingTodoItemsAndRetrievingThem(t *testing.T) {
 	os.Setenv("env", "test")

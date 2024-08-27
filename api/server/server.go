@@ -51,26 +51,6 @@ func (t *TodoServer) healthHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `{"status": "ok"}`)
 }
 
-// func (t *TodoServer) todoHandler(w http.ResponseWriter, r *http.Request) {
-// 	log.Printf("%s %s", r.Method, r.URL.Path)
-
-// 	switch r.Method {
-// 	case http.MethodPost:
-// 		t.Insert(w, r)
-// 	case http.MethodGet:
-// 		t.fetchOne(w, r)
-// 	}
-// }
-
-// func (t *TodoServer) todosHandler(w http.ResponseWriter, r *http.Request) {
-// 	log.Printf("%s %s", r.Method, r.URL.Path)
-
-// 	switch r.Method {
-// 	case http.MethodGet:
-// 		t.fetchAll(w)
-// 	}
-// }
-
 func (t *TodoServer) handleGetTodo(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s", r.Method, r.URL.Path)
 	id, err := strconv.Atoi(r.PathValue("id"))

@@ -90,14 +90,16 @@ func (dts *DbTodoStore) Get(ctx context.Context, id int) (Todo, error) {
 		default:
 			row := dts.db.QueryRowContext(ctx, "SELECT * FROM todo WHERE id=?", id)
 			todo := Todo{}
-			if err := row.Scan(&todo.Id, &todo.Time, &todo.Description, &todo.Completed); err == sql.ErrNoRows {
+			if err := row.Scan(&todo.Id, &todo.Time, &todo.Description, &todo.Completed); err != nil {
 				e <- errors.Wrap(err, "Id not found")
+				close(e)
 				return
 			} else {
 				result = todo
 			}
 		}
 		data <- result
+		close(data)
 	}()
 
 	select {
@@ -108,7 +110,7 @@ func (dts *DbTodoStore) Get(ctx context.Context, id int) (Todo, error) {
 		logger.Info(fmt.Sprintf("Found todo item: %+v", result))
 		return result, nil
 	case err := <-e:
-		logger.Error("Id not found", err)
+		logger.Info("Id not found", err)
 		return Todo{}, err
 	}
 }
