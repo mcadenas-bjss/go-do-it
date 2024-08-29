@@ -1,5 +1,5 @@
 {
-  "cSpell.words": ["todos"],
+  "cSpell.words": ["preact", "todos"],
   "triggerTaskOnSave.tasks": {
     "go: test package": ["*_test.go"]
   }
