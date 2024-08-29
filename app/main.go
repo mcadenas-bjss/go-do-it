@@ -13,23 +13,27 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"github.com/mcadenas-bjss/go-do-it/app/utils"
 )
 
-const baseURL = "http://localhost:8000/api"
+const (
+	baseURL    = "http://localhost:8000/api"
+	WEBAPP_URL = "https://cricket-rational-pika.ngrok-free.app"
+)
 
 func main() {
 	fmt.Println("Running Fyne app")
 
 	app := NewApp()
-	app.Window.Resize(fyne.NewSize(500, 500))
+	app.Window.Resize(fyne.NewSize(700, 500))
 
 	todos := app.newTodoList()
 
 	buttonBox := container.New(layout.NewVBoxLayout())
-	newTodoForm := app.newTodoForm()
+	form := app.newTodoForm()
+	app.form = form
 	syncButton := widget.NewButton("Sync", func() {
 		log.Println("Synchronizing list")
 		go func() {
@@ -38,8 +42,8 @@ func main() {
 		}()
 	})
 	app.Synchronize = syncButton
-	buttonBox.Add(canvas.NewText("Add a new todo:", color.White))
-	buttonBox.Add(newTodoForm)
+	buttonBox.Add(utils.NewSectionLabel("Add a new todo:"))
+	buttonBox.Add(form)
 	buttonBox.Add(syncButton)
 
 	top := canvas.NewText("To Do:", color.White)
@@ -88,6 +92,7 @@ type App struct {
 	Window      fyne.Window
 	Store       Store
 	Synchronize *widget.Button
+	form        *widget.Form
 }
 
 func NewApp() *App {
@@ -116,11 +121,8 @@ func (a *App) newTodoList() fyne.CanvasObject {
 	}
 	updateItem := func(id widget.ListItemID, obj fyne.CanvasObject) {
 		todo := a.Store.data[id+1]
-		c := binding.BindBool(&todo.Completed)
-		d := binding.BindString(&todo.Description)
 
 		checkbox := obj.(*fyne.Container).Objects[0].(*widget.Check)
-		checkbox.Bind(c)
 		checkbox.SetChecked(todo.Completed)
 		checkbox.OnChanged = func(value bool) {
 			log.Printf("checkbox %d clicked", id)
@@ -129,9 +131,19 @@ func (a *App) newTodoList() fyne.CanvasObject {
 			}()
 		}
 
-		description := obj.(*fyne.Container).Objects[2].(*widget.Label)
-		description.Bind(d)
+		description := obj.(*fyne.Container).Objects[1].(*widget.Label)
 		description.SetText(todo.Description)
+
+		dueText := obj.(*fyne.Container).Objects[3].(*canvas.Text)
+		if len(todo.Time) > 0 {
+			dueText.Text = "Due:"
+			dueText.Show()
+		} else {
+			dueText.Hide()
+		}
+
+		dateTime := obj.(*fyne.Container).Objects[4].(*widget.Label)
+		dateTime.SetText(utils.FormatDueDateTime(todo.Time))
 	}
 	t := widget.NewList(length, create, updateItem)
 	t.OnSelected = selected
@@ -141,11 +153,12 @@ func (a *App) newTodoList() fyne.CanvasObject {
 func (a *App) NewTodoListItem() fyne.CanvasObject {
 	checkbox := widget.NewCheck("", nil)
 	description := widget.NewLabel("")
-	content := container.New(layout.NewHBoxLayout(), checkbox, layout.NewSpacer(), description)
+	dateTime := widget.NewLabel("")
+	content := container.New(layout.NewHBoxLayout(), checkbox, description, layout.NewSpacer(), canvas.NewText("Due:", color.White), dateTime)
 	return content
 }
 
-func (a *App) newTodoForm() fyne.CanvasObject {
+func (a *App) newTodoForm() *widget.Form {
 	description := widget.NewEntry()
 	day := widget.NewSelectEntry(getRange(1, 31))
 	month := widget.NewSelectEntry(getRange(1, 12))
@@ -170,7 +183,23 @@ func (a *App) newTodoForm() fyne.CanvasObject {
 			a.insert(Todo{Id: 0, Description: description.Text, Time: timeString, Completed: false})
 		},
 	}
+	form.Orientation = widget.Horizontal
 	return form
+}
+
+func (a *App) resetForm() {
+	for i, f := range a.form.Items {
+		switch i {
+		case 0:
+			f.Widget.(*widget.Entry).SetText("")
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			f.Widget.(*widget.SelectEntry).SetText("")
+		}
+	}
 }
 
 func (s *Store) StartManager() {
@@ -328,6 +357,7 @@ func (a *App) insert(todo Todo) {
 	case reply := <-replyChan:
 		log.Println("Received reply from insert", reply)
 		a.Synchronize.OnTapped()
+		a.resetForm()
 	}
 }
 

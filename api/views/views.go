@@ -4,6 +4,7 @@ import (
 	"embed"
 	"html/template"
 	"io"
+	"log"
 	"time"
 
 	"github.com/mcadenas-bjss/go-do-it/api/store"
@@ -52,25 +53,34 @@ func (tr *TodoRenderer) RenderTodo(w io.Writer, todo store.Todo) error {
 				return ""
 			},
 			"formatTime": func(t string) string {
-				var layout = "2006-01-02T15:04:05Z07:00" // ISO 8601 format
+				if len(t) == 0 {
+					return ""
+				}
+
+				var layout = "2006-01-02T15:04:05Z0700" // ISO 8601 format
 				var output = "Mon, 02 Jan 2006 15:04"
-				check, _ := time.Parse(layout, t)
+
+				check_t, _ := time.Parse(layout, t)
+				checkDate_t, _ := time.Parse("2006-01-02", check_t.Format("2006-01-02"))
+				nowDate_t, _ := time.Parse("2006-01-02", time.Now().Format("2006-01-02"))
 
 				if len(t) == 0 {
 					return ""
 				}
 
-				f := check.Format(output)
+				f := check_t.Format(output)
 
-				if inTimeSpan(time.Now().AddDate(0, 0, -1), time.Now(), check) {
-					f = "Yesterday at " + check.Format("3:04 PM")
+				if inTimeSpan(nowDate_t.AddDate(0, 0, -1), nowDate_t, checkDate_t) {
+					f = "Yesterday at " + check_t.Format("3:04 PM")
 				}
-				if inTimeSpan(time.Now(), time.Now().AddDate(0, 0, 1), check) {
-					f = "Today at " + check.Format("3:04 PM")
+				if inTimeSpan(nowDate_t, nowDate_t.AddDate(0, 0, 1), checkDate_t) {
+					f = "Today at " + check_t.Format("3:04 PM")
 				}
-				if inTimeSpan(time.Now().AddDate(0, 0, 1), time.Now().AddDate(0, 0, 2), check) {
-					f = "Tomorrow at " + check.Format("3:04 PM")
+				if inTimeSpan(nowDate_t.AddDate(0, 0, 1), nowDate_t.AddDate(0, 0, 2), checkDate_t) {
+					f = "Tomorrow at " + check_t.Format("3:04 PM")
 				}
+
+				log.Printf("formatted %s to %s", t, f)
 
 				return f
 			},
