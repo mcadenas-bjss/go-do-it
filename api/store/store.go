@@ -304,6 +304,10 @@ func (d *DbTodoStore) toggle(ctx context.Context, id int) (bool, error) {
 	})
 }
 
+func (dts *DbTodoStore) Close() {
+	dts.db.Close()
+}
+
 func prepareGet(db *sql.DB) (*sql.Stmt, error) {
 	return db.Prepare("SELECT * FROM todo WHERE id=?")
 }

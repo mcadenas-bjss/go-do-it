@@ -17,10 +17,12 @@ const DBConnection = "file:test1?mode=memory&cache=shared"
 
 func TestInsertingTodoItemsAndRetrievingThem(t *testing.T) {
 	os.Setenv("env", "test")
-	dbStore, err := store.NewDbTodoStore(DBConnection)
+	dbStore, err := store.NewDbTodoStore("file:../test.db?cache=shared")
 	if err != nil {
 		t.Error(err)
 	}
+
+	defer dbStore.Close()
 
 	srv := *server.NewTodoServer(dbStore)
 
