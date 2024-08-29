@@ -29,6 +29,8 @@ Due to time constraints I ignored a proper file structure and testing.
 
 ### Running the app
 
+As with the web app, the API must be running in the background for this app to work as it communicates with the go back-end via http.
+
 `go run ./app/main.go`
 
 ## Help Scripts
