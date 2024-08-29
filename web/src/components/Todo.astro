@@ -1,0 +1,35 @@
+---
+const { Id, Time, Description, Completed } = Astro.props;
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString("en-uk", {
+    weekday: "long",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  });
+};
+---
+
+<li id={`todo-${Id}`}>
+  <div class="todo">
+    <input
+      id={`todo-${Id}-checkbox`}
+      type="checkbox"
+      checked={Completed}
+      hx-trigger="change"
+      hx-post={`/api/todo/toggle/${Id}`}
+    />
+    <p>{Description}</p>
+    <button
+      hx-delete={`/api/todo/${Id}`}
+      hx-swap="delete"
+      hx-target={`#todo-${Id}`}>Delete</button
+    >
+    <div class="meta">
+      {Time && <time datetime={Time}>{formatDate(Time)}</time>}
+    </div>
+  </div>
+</li>

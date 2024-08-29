@@ -1,0 +1,154 @@
+---
+import Layout from "../layouts/Layout.astro";
+import "../styles/index.css";
+import { formatDate } from "../utils/dates";
+import { BASE_URL, TODOS_PATH } from "../utils/globals";
+
+export const prerender = true;
+const res = await fetch(`${BASE_URL}${TODOS_PATH}`);
+const data: Todos = await res.json();
+---
+
+<Layout title="An overly complicated to do app in go lang.">
+  <main>
+    <h1>Go Do It</h1>
+    <ul class="todo-list">
+      {
+        data.map(({ Id, Time, Description, Completed }) => (
+          <li id={`todo-${Id}`}>
+            <div class="todo">
+              <input
+                id={`todo-${Id}-checkbox`}
+                type="checkbox"
+                checked={Completed}
+                hx-trigger="change"
+                hx-post={`/api/todo/toggle/${Id}`}
+              />
+              <p>{Description}</p>
+              <button
+                id="edit"
+                hx-get={`/api/todo/edit/${Id}`}
+                hx-swap="outerHTML"
+                hx-target={`#todo-${Id}`}
+              >
+                &#9998
+              </button>
+              <button
+                id="delete"
+                hx-delete={`/api/todo/${Id}`}
+                hx-swap="delete"
+                hx-target={`#todo-${Id}`}
+              >
+                &#10799
+              </button>
+              <div class="meta">
+                {Time && <time datetime={Time}>{formatDate(Time)}</time>}
+              </div>
+            </div>
+          </li>
+        ))
+      }
+      <li id="new-todo" style="list-style: none; padding: 0;">
+        <label style="text-decoration: underline;" for="new-todo-form"
+          >Add new item</label
+        >
+        <form id="new-todo-form" class="todo" action="submit" method="post">
+          <div>
+            <label for="description">Description:</label>
+            <textarea
+              id="description"
+              name="description"
+              rows="1"
+              cols="50"
+              required></textarea>
+          </div>
+          <div>
+            <label for="time">Time:</label>
+            <input
+              type="datetime-local"
+              id="time"
+              name="time"
+              min="2018-06-07T00:00"
+            />
+          </div>
+          <button
+            type="submit"
+            hx-post="/api/todo"
+            hx-swap="beforebegin"
+            hx-target="#new-todo">Add</button
+          >
+        </form>
+      </li>
+    </ul>
+  </main>
+</Layout>
+<script>
+  document.addEventListener("htmx:afterRequest", function (event) {
+    const r = new RegExp(/todo-\d*-checkbox|save-\d*/);
+    if (((event as CustomEvent).detail.target.id as string).match(r)) {
+      window.location.href = "/";
+    }
+  });
+</script>
+
+<style>
+  main {
+    margin: auto;
+    padding: 1rem;
+    width: 800px;
+    max-width: calc(100% - 2rem);
+    color: white;
+    font-size: 20px;
+    line-height: 1.6;
+  }
+  .astro-a {
+    position: absolute;
+    top: -32px;
+    left: 50%;
+    transform: translatex(-50%);
+    width: 220px;
+    height: auto;
+    z-index: -1;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    margin-bottom: 1em;
+  }
+  .text-gradient {
+    background-image: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 400%;
+    background-position: 0%;
+  }
+  .instructions {
+    margin-bottom: 2rem;
+    border: 1px solid rgba(var(--accent-light), 25%);
+    background: linear-gradient(
+      rgba(var(--accent-dark), 66%),
+      rgba(var(--accent-dark), 33%)
+    );
+    padding: 1.5rem;
+    border-radius: 8px;
+  }
+  .instructions code {
+    font-size: 0.8em;
+    font-weight: bold;
+    background: rgba(var(--accent-light), 12%);
+    color: rgb(var(--accent-light));
+    border-radius: 4px;
+    padding: 0.3em 0.4em;
+  }
+  .instructions strong {
+    color: rgb(var(--accent-light));
+  }
+  .link-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr));
+    gap: 2rem;
+    padding: 0;
+  }
+</style>

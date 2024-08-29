@@ -7,7 +7,7 @@ id=$1
 
 # Make the POST request using curl
 echo "$url$id"
-response=$(curl -X GET "$url$id")
+response=$(curl -X DELETE "$url$id")
 
 # Print the response
 echo "$response"

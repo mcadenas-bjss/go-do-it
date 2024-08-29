@@ -1,0 +1,14 @@
+<li id="todo-{{.Id}}">
+  <div class="todo">
+    <input id="todo-{{.Id}}-checkbox" type="checkbox" {{.Completed}} />
+    <p>{{.Description}}</p>
+    <button
+      hx-delete="/api/todo/{{.Id}}"
+      hx-swap="delete"
+      hx-target="#todo-{{.Id}}">Delete</button
+    >
+    <div class="meta">
+      <time datetime={{.Time}}>{{.Time}}</time>
+    </div>
+  </div>
+</li>
