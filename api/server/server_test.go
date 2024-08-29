@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,7 +19,57 @@ type StubStore struct {
 	todos map[int]store.Todo
 }
 
-func (s *StubStore) Get(ctx context.Context, id int) (store.Todo, error) {
+func (s *StubStore) StartManager() chan<- store.Command {
+	cmds := make(chan store.Command)
+
+	go func() {
+		for cmd := range cmds {
+			switch cmd.Cmd {
+			case store.GetCommand:
+				if todo, err := s.get(cmd.Ctx, cmd.Payload.(int)); err != nil {
+					cmd.Err <- err
+				} else {
+					cmd.Reply <- todo
+				}
+			case store.GetAllCommand:
+				if todos, err := s.all(cmd.Ctx); err != nil {
+					cmd.Err <- err
+				} else {
+					cmd.Reply <- todos
+				}
+			case store.InsertCommand:
+				if id, err := s.insert(cmd.Ctx, cmd.Payload.(store.Todo)); err != nil {
+					cmd.Err <- err
+				} else {
+					cmd.Reply <- id
+				}
+			case store.UpdateCommand:
+				if ok, err := s.update(cmd.Ctx, cmd.Payload.(store.Todo)); err != nil {
+					cmd.Err <- err
+				} else {
+					cmd.Reply <- ok
+				}
+			case store.DeleteCommand:
+				if ok, err := s.delete(cmd.Ctx, cmd.Payload.(int)); err != nil {
+					cmd.Err <- err
+				} else {
+					cmd.Reply <- ok
+				}
+			case store.ToggleCommand:
+				if ok, err := s.toggle(cmd.Ctx, cmd.Payload.(int)); err != nil {
+					cmd.Err <- err
+				} else {
+					cmd.Reply <- ok
+				}
+			default:
+				log.Fatal("unknown command type", cmd.Cmd)
+			}
+		}
+	}()
+	return cmds
+}
+
+func (s *StubStore) get(ctx context.Context, id int) (store.Todo, error) {
 	data := make(chan store.Todo, 1)
 	e := make(chan error, 1)
 
@@ -48,7 +99,7 @@ func (s *StubStore) Get(ctx context.Context, id int) (store.Todo, error) {
 	}
 }
 
-func (s *StubStore) All() ([]store.Todo, error) {
+func (s *StubStore) all(ctx context.Context) ([]store.Todo, error) {
 	v := make([]store.Todo, 0, len(s.todos))
 
 	for _, value := range s.todos {
@@ -57,18 +108,22 @@ func (s *StubStore) All() ([]store.Todo, error) {
 	return v, nil
 }
 
-func (s *StubStore) Insert(todo store.Todo) (int, error) {
+func (s *StubStore) insert(ctx context.Context, todo store.Todo) (int, error) {
 	newId := len(s.todos) + 1
 	s.todos[newId] = todo
 	return newId, nil
 }
 
-func (s *StubStore) Update(id int, todo store.Todo) (bool, error) {
+func (s *StubStore) update(ctx context.Context, todo store.Todo) (bool, error) {
 	return true, nil
 }
 
-func (s *StubStore) Delete(id int) error {
-	return nil
+func (s *StubStore) delete(ctx context.Context, id int) (bool, error) {
+	return true, nil
+}
+
+func (s *StubStore) toggle(ctx context.Context, id int) (bool, error) {
+	return true, nil
 }
 
 func TestHealth(t *testing.T) {
@@ -122,7 +177,7 @@ func TestCRUD(t *testing.T) {
 	})
 
 	t.Run("Get all returns array with items", func(t *testing.T) {
-		request, _ := http.NewRequest("GET", "/todos", nil)
+		request, _ := http.NewRequest("GET", "/api/todos", nil)
 		response := httptest.NewRecorder()
 
 		todoServer.ServeHTTP(response, request)
@@ -140,7 +195,7 @@ func TestCRUD(t *testing.T) {
 		emptyServer := server.NewTodoServer(&StubStore{
 			make(map[int]store.Todo),
 		})
-		request, _ := http.NewRequest("GET", "/todos", nil)
+		request, _ := http.NewRequest("GET", "/api/todos", nil)
 		response := httptest.NewRecorder()
 
 		emptyServer.ServeHTTP(response, request)
@@ -171,12 +226,12 @@ func TestCRUD(t *testing.T) {
 func NewPostTodoRequest(todo store.Todo) *http.Request {
 	buff := bytes.Buffer{}
 	json.NewEncoder(&buff).Encode(todo)
-	req, _ := http.NewRequest(http.MethodPost, "/todo", &buff)
+	req, _ := http.NewRequest(http.MethodPost, "/api/todo", &buff)
 	return req
 }
 
 func NewGetTodoRequest(id int) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/todo/%d", id), nil)
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/todo/%d", id), nil)
 	return req
 }
 
