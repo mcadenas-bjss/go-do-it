@@ -1,0 +1,63 @@
+package server_test
+
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"reflect"
+	"testing"
+
+	"github.com/mcadenas-bjss/go-do-it/api/server"
+	"github.com/mcadenas-bjss/go-do-it/api/store"
+)
+
+const testDbFile = "test_db.db"
+
+func TestInsertingTodoItemsAndRetrievingThem(t *testing.T) {
+	os.Setenv("env", "test")
+	var srv server.TodoServer
+	if store, err := store.NewDbTodoStore(testDbFile); err != nil {
+		t.Error(err)
+	} else {
+		srv = *server.NewTodoServer(store)
+	}
+
+	if _, err := os.Stat(testDbFile); err == nil {
+		defer os.Remove(testDbFile)
+	} else if errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("DB file was not created")
+	}
+
+	newTodo := &store.Todo{
+		Id:          0,
+		Time:        "2024-01-01T00:00:00.000Z",
+		Description: "test todo",
+		Completed:   false,
+	}
+
+	insertResp := httptest.NewRecorder()
+	srv.ServeHTTP(insertResp, NewPostTodoRequest(*newTodo))
+	var insertBody struct {
+		id int
+	}
+	assertJson(t, insertResp.Body, insertBody)
+
+	response := httptest.NewRecorder()
+	srv.ServeHTTP(response, NewGetTodoRequest(insertBody.id))
+	assertStatus(t, response.Code, http.StatusOK)
+	assertTodo(t, response.Body, *newTodo)
+}
+
+func assertTodo(t testing.TB, actual *bytes.Buffer, expected store.Todo) {
+	t.Helper()
+
+	var td store.Todo
+	json.NewDecoder(actual).Decode(&td)
+
+	if !reflect.DeepEqual(td, expected) {
+		t.Errorf("got %v want %v", actual, expected)
+	}
+}

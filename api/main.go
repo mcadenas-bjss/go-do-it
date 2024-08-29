@@ -1,29 +1,38 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
+	"github.com/mcadenas-bjss/go-do-it/api/logging"
 	"github.com/mcadenas-bjss/go-do-it/api/server"
 	"github.com/mcadenas-bjss/go-do-it/api/store"
 )
 
-func main() {
+var logger = logging.NewLogger(0)
 
-	store, err := store.NewDbTodoStore()
+func main() {
+	var port, logLevel int
+	var db string
+
+	// Get the command line arguments
+	flag.IntVar(&port, "port", 8000, "Port number")
+	flag.IntVar(&logLevel, "logLevel", 0, "Log level")
+	flag.StringVar(&db, "db", "todo.db", "Database file path")
+
+	flag.Parse()
+
+	logger.SetLevel(logLevel)
+
+	store, err := store.NewDbTodoStore(db)
 
 	if err != nil {
 		panic(err)
 	}
 
-	portnum := 8000
-	if len(os.Args) > 1 {
-		portnum, _ = strconv.Atoi(os.Args[1])
-	}
-	log.Printf("Going to listen on port %d\n", portnum)
-
+	logger.Info("Starting server on port " + strconv.Itoa(port))
 	server := server.NewTodoServer(store)
-	log.Fatal(http.ListenAndServe("localhost:"+strconv.Itoa(portnum), server))
+	log.Fatal(http.ListenAndServe("localhost:"+strconv.Itoa(port), server))
 }
