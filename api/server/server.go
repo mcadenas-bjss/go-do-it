@@ -13,11 +13,6 @@ import (
 )
 
 type TodoStore interface {
-	// Get(ctx context.Context, id int) (store.Todo, error)
-	// All() ([]store.Todo, error)
-	// Insert(ctx context.Context, todo store.Todo) (int, error)
-	// Update(id int, todo store.Todo) (bool, error)
-	// Delete(id int) error
 	StartManager() chan<- store.Command
 }
 
@@ -30,6 +25,12 @@ type TodoServer struct {
 
 const jsonContentType = "application/json"
 const htmlContentType = "text/html"
+const (
+	HEALTH_PATH    = "GET /api/health"
+	TODO_ID_PATH   = "/api/todo/{id}"
+	POST_TODO_PATH = "POST /api/todo"
+	GET_TODOS_PATH = "GET /api/todos"
+)
 
 func NewTodoServer(store TodoStore) *TodoServer {
 	t := new(TodoServer)
@@ -49,12 +50,12 @@ func NewTodoServer(store TodoStore) *TodoServer {
 	router := http.NewServeMux()
 
 	// API CRUD
-	router.Handle("GET /api/health", http.HandlerFunc(t.healthHandler))
-	router.Handle("GET /api/todo/{id}", http.HandlerFunc(t.handleGetTodo))
-	router.Handle("POST /api/todo", http.HandlerFunc(t.handlePostTodo))
-	router.Handle("DELETE /api/todo/{id}", http.HandlerFunc(t.handleDeleteTodo))
-	router.Handle("PUT /api/todo/{id}", http.HandlerFunc(t.handlePutTodo))
-	router.Handle("GET /api/todos", http.HandlerFunc(t.handleGetAllTodo))
+	router.Handle(HEALTH_PATH, http.HandlerFunc(t.healthHandler))
+	router.Handle(fmt.Sprintf("GET %s", TODO_ID_PATH), http.HandlerFunc(t.handleGetTodo))
+	router.Handle(POST_TODO_PATH, http.HandlerFunc(t.handlePostTodo))
+	router.Handle(fmt.Sprintf("DELETE %s", TODO_ID_PATH), http.HandlerFunc(t.handleDeleteTodo))
+	router.Handle(fmt.Sprintf("PUT %s", TODO_ID_PATH), http.HandlerFunc(t.handlePutTodo))
+	router.Handle(GET_TODOS_PATH, http.HandlerFunc(t.handleGetAllTodo))
 
 	// Partials
 	router.Handle("POST /api/todo/toggle/{id}", http.HandlerFunc(t.handleToggleCompleteState))

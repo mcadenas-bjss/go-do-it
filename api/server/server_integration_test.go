@@ -3,7 +3,6 @@ package server_test
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,22 +13,22 @@ import (
 	"github.com/mcadenas-bjss/go-do-it/api/store"
 )
 
-const testDbFile = "test_db.db"
+const DBConnection = "file:test1?mode=memory&cache=shared"
 
 func TestInsertingTodoItemsAndRetrievingThem(t *testing.T) {
 	os.Setenv("env", "test")
-	var srv server.TodoServer
-	if store, err := store.NewDbTodoStore(testDbFile); err != nil {
+	dbStore, err := store.NewDbTodoStore(DBConnection)
+	if err != nil {
 		t.Error(err)
-	} else {
-		srv = *server.NewTodoServer(store)
 	}
 
-	if _, err := os.Stat(testDbFile); err == nil {
-		defer os.Remove(testDbFile)
-	} else if errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("DB file was not created")
-	}
+	srv := *server.NewTodoServer(dbStore)
+
+	// if _, err := os.Stat(testDbFile); err == nil {
+	// 	defer os.Remove(testDbFile)
+	// } else if errors.Is(err, os.ErrNotExist) {
+	// 	t.Fatalf("DB file was not created")
+	// }
 
 	newTodo := &store.Todo{
 		Id:          0,
