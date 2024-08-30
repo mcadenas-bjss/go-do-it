@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/mcadenas-bjss/go-do-it/api/server"
-	"github.com/mcadenas-bjss/go-do-it/api/store"
+	"github.com/mcadenas-bjss/go-do-it/server"
+	"github.com/mcadenas-bjss/go-do-it/store"
 )
 
 const DBConnection = "file:test1?mode=memory&cache=shared"

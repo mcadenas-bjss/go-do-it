@@ -11,8 +11,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mcadenas-bjss/go-do-it/api/server"
-	"github.com/mcadenas-bjss/go-do-it/api/store"
+	"github.com/mcadenas-bjss/go-do-it/server"
+	"github.com/mcadenas-bjss/go-do-it/store"
 )
 
 type StubStore struct {

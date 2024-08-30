@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/mcadenas-bjss/go-do-it/api/store"
-	"github.com/mcadenas-bjss/go-do-it/api/views"
+	"github.com/mcadenas-bjss/go-do-it/store"
+	"github.com/mcadenas-bjss/go-do-it/views"
 	"github.com/pkg/errors"
 )
 
