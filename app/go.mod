@@ -1,19 +1,10 @@
-module github.com/mcadenas-bjss/go-do-it
+module github.com/mcadenas-bjss/go-do-it/desktop
 
 go 1.22.6
 
-require (
-	fyne.io/fyne/v2 v2.5.1
-	github.com/aws/smithy-go v1.20.4
-)
+require fyne.io/fyne/v2 v2.5.1
 
 require (
-	github.com/fyne-io/mobile v0.1.2 // indirect
-	github.com/goki/freetype v0.0.0-20181231101311-fa8a33aabaff // indirect
-)
-
-require (
-	fyne.io/fyne v1.4.3
 	fyne.io/systray v1.11.0 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -30,9 +21,7 @@ require (
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/jeandeaual/go-locale v0.0.0-20240223122105-ce5225dcaa49 // indirect
 	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
-	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/nicksnyder/go-i18n/v2 v2.4.0 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rymdport/portal v0.2.6 // indirect
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect

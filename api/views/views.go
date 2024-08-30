@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/mcadenas-bjss/go-do-it/api/store"
+	"github.com/mcadenas-bjss/go-do-it/store"
 )
 
 var (

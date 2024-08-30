@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/mcadenas-bjss/go-do-it/api/logging"
+	"github.com/mcadenas-bjss/go-do-it/logging"
 	"github.com/pkg/errors"
 )
 

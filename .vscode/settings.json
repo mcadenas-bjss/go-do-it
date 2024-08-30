@@ -1,5 +1,6 @@
 {
   "cSpell.words": ["preact", "todos"],
   "triggerTaskOnSave.tasks": {},
-  "makefile.configureOnOpen": false
+  "makefile.configureOnOpen": false,
+  "git.ignoreLimitWarning": true
 }

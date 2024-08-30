@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/mcadenas-bjss/go-do-it/api/logging"
-	"github.com/mcadenas-bjss/go-do-it/api/server"
-	"github.com/mcadenas-bjss/go-do-it/api/store"
+	"github.com/mcadenas-bjss/go-do-it/logging"
+	"github.com/mcadenas-bjss/go-do-it/server"
+	"github.com/mcadenas-bjss/go-do-it/store"
 )
 
 var logger = logging.NewLogger(0)
@@ -26,13 +26,13 @@ func main() {
 
 	logger.SetLevel(logLevel)
 
-	store, err := store.NewDbTodoStore(db)
+	dataStore, err := store.NewDbTodoStore(db)
 
 	if err != nil {
 		panic(err)
 	}
 
 	logger.Info("Starting server on port " + strconv.Itoa(port))
-	server := server.NewTodoServer(store)
+	server := server.NewTodoServer(dataStore)
 	log.Fatal(http.ListenAndServe("localhost:"+strconv.Itoa(port), server))
 }
