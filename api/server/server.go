@@ -86,7 +86,11 @@ func (t *TodoServer) handleGetTodo(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case err := <-errChannel:
-		if err != nil {
+		switch err.Error() {
+		case "todo not found":
+			w.WriteHeader(http.StatusNotFound)
+			return
+		default:
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
