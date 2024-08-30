@@ -4,7 +4,6 @@ import (
 	"embed"
 	"html/template"
 	"io"
-	"log"
 	"time"
 
 	"github.com/mcadenas-bjss/go-do-it/store"
@@ -79,8 +78,6 @@ func (tr *TodoRenderer) RenderTodo(w io.Writer, todo store.Todo) error {
 				if inTimeSpan(nowDate_t.AddDate(0, 0, 1), nowDate_t.AddDate(0, 0, 2), checkDate_t) {
 					f = "Tomorrow at " + check_t.Format("3:04 PM")
 				}
-
-				log.Printf("formatted %s to %s", t, f)
 
 				return f
 			},

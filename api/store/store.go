@@ -4,17 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/mcadenas-bjss/go-do-it/logging"
+	"github.com/mcadenas-bjss/go-do-it/logger"
 	"github.com/pkg/errors"
 )
 
-// const file string = "../todo.db"
-var logger = logging.NewLogger(0)
+var log = logger.NewLogger(nil)
 
 const create string = `
   CREATE TABLE IF NOT EXISTS todo (
@@ -26,8 +24,8 @@ const create string = `
 
 func NewDbTodoStore(file string) (*DbTodoStore, error) {
 	env := os.Getenv("env")
-	logger.Info("Running on " + env)
-	logger.Info(fmt.Sprintf("Opening sqlite file at %s", file))
+	log.Info("Running on " + env)
+	log.Info(fmt.Sprintf("Opening sqlite file at %s", file))
 	db, err := sql.Open("sqlite3", file)
 	if err != nil {
 		return nil, err
@@ -51,7 +49,7 @@ func NewDbTodoStore(file string) (*DbTodoStore, error) {
 	// Seed data if db empty
 	if rows, err := list.Query(); err == nil && env != "test" {
 		if !rows.Next() {
-			logger.Info("Seeding data")
+			log.Info("Seeding data")
 			insert.Exec("2020-01-01T00:00:00Z", "test", false)
 		}
 		rows.Close()
@@ -170,19 +168,19 @@ func withContext[T any](ctx context.Context, def func() (T, error)) (T, error) {
 	var t T
 	select {
 	case <-ctx.Done():
-		logger.Error("Connection closed")
+		log.Error("Connection closed")
 		return t, ctx.Err()
 	case result := <-data:
-		logger.Info(fmt.Sprintf("%+v", result))
+		log.Info(fmt.Sprintf("%+v", result))
 		return result, nil
 	case err := <-e:
-		logger.Info(fmt.Sprintf("%v", err))
+		log.Info(fmt.Sprintf("%v", err))
 		return t, err
 	}
 }
 
 func (dts *DbTodoStore) get(ctx context.Context, id int) (Todo, error) {
-	logger.Info(fmt.Sprintf("Getting todo item: %d", id))
+	log.Info(fmt.Sprintf("Getting todo item: %d", id))
 
 	return withContext(ctx, func() (Todo, error) {
 		row := dts.db.QueryRowContext(ctx, "SELECT * FROM todo WHERE id=?", id)
@@ -197,7 +195,7 @@ func (dts *DbTodoStore) get(ctx context.Context, id int) (Todo, error) {
 }
 
 func (dts *DbTodoStore) all(ctx context.Context) ([]Todo, error) {
-	logger.Info("Getting all todos")
+	log.Info("Getting all todos")
 
 	return withContext(ctx, func() ([]Todo, error) {
 		rows, err := dts.db.QueryContext(ctx, "SELECT * FROM todo")
@@ -218,26 +216,24 @@ func (dts *DbTodoStore) all(ctx context.Context) ([]Todo, error) {
 			todos = append(todos, todo)
 		}
 
-		logger.Info(fmt.Sprintf("Found %d items", len(todos)))
+		log.Info(fmt.Sprintf("Found %d items", len(todos)))
 		return todos, nil
 	})
 }
 
 func (t *DbTodoStore) insert(ctx context.Context, todo Todo) (int, error) {
-	logger.Info("Inserting todo", todo)
+	log.Info("Inserting todo", todo)
 
 	return withContext(ctx, func() (int, error) {
-		// t.lock.Lock()
-		// defer t.lock.Unlock()
 		res, err := t.db.ExecContext(ctx, "INSERT INTO todo VALUES(NULL,?,?,?);", todo.Time, todo.Description, todo.Completed)
 		if err != nil {
-			logger.Error("Error: %s", err)
+			log.Errorf("Error: %s", err)
 			return 0, err
 		}
 
 		id, err := res.LastInsertId()
 		if err != nil {
-			logger.Error("Error: %s", err)
+			log.Errorf("Error: %s", err)
 			return 0, err
 		}
 
@@ -247,16 +243,16 @@ func (t *DbTodoStore) insert(ctx context.Context, todo Todo) (int, error) {
 }
 
 func (d *DbTodoStore) update(ctx context.Context, todo Todo) (bool, error) {
-	logger.Info(fmt.Sprintf("Updating todo %+v", todo))
+	log.Info(fmt.Sprintf("Updating todo %+v", todo))
 
 	return withContext(ctx, func() (bool, error) {
 		res, err := d.db.ExecContext(ctx, "UPDATE todo SET time=?, description=? WHERE id=?", todo.Time, todo.Description, todo.Id)
 		if err != nil {
-			logger.Info("Error: %s", err)
+			log.Infof("Error: %s", err)
 			return false, errors.Wrap(err, "Update failed")
 		}
 		if n, e := res.RowsAffected(); n != 1 {
-			logger.Info("Error: %s", e)
+			log.Infof("Error: %s", e)
 			return false, e
 		}
 		return true, nil
@@ -265,16 +261,16 @@ func (d *DbTodoStore) update(ctx context.Context, todo Todo) (bool, error) {
 }
 
 func (d *DbTodoStore) delete(ctx context.Context, id int) (bool, error) {
-	logger.Info(fmt.Sprintf("Deleting todo %d", id))
+	log.Info(fmt.Sprintf("Deleting todo %d", id))
 	return withContext(ctx, func() (bool, error) {
 
 		res, err := d.db.ExecContext(ctx, "DELETE FROM todo WHERE id=?", id)
 		if err != nil {
-			logger.Error("Error: %s", err)
+			log.Errorf("Error: %s", err)
 			return false, err
 		}
 		if n, e := res.RowsAffected(); n > 1 {
-			logger.Error("Error: %s", e)
+			log.Errorf("Error: %s", e)
 			return false, e
 		}
 		return true, nil
@@ -282,20 +278,20 @@ func (d *DbTodoStore) delete(ctx context.Context, id int) (bool, error) {
 }
 
 func (d *DbTodoStore) toggle(ctx context.Context, id int) (bool, error) {
-	logger.Info(fmt.Sprintf("Toggling complete status for todo %d", id))
+	log.Info(fmt.Sprintf("Toggling complete status for todo %d", id))
 	return withContext(ctx, func() (bool, error) {
 		todo, e := d.get(ctx, id)
 		if e != nil {
-			logger.Error("Error: %s", e)
+			log.Errorf("Error: %s", e)
 			return false, e
 		}
 		res, err := d.db.ExecContext(ctx, "UPDATE todo SET completed=? WHERE id=?", !todo.Completed, id)
 		if err != nil {
-			logger.Error("Error: %s", err)
+			log.Errorf("Error: %s", err)
 			return false, err
 		}
 		if n, e := res.RowsAffected(); n != 1 {
-			logger.Error("Error: %s", e)
+			log.Errorf("Error: %s", e)
 			return false, e
 		}
 		return true, nil

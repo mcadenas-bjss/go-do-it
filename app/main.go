@@ -269,7 +269,10 @@ func (s *Store) insert(todo Todo) error {
 	url := fmt.Sprintf("%s/todo", baseURL)
 
 	buff := bytes.Buffer{}
-	json.NewEncoder(&buff).Encode(todo)
+	err := json.NewEncoder(&buff).Encode(todo)
+	if err != nil {
+		return err
+	}
 	request, _ := http.NewRequest(http.MethodPost, url, &buff)
 	request.Header.Add("Accept", "application/json")
 	client := &http.Client{}

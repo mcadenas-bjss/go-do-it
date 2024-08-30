@@ -25,11 +25,11 @@ vet: *.go
 lint: *.go
 	golangci-lint run
 
-test: *_test.go
+test:
 	go test -coverprofile coverage.out ./...
 	go tool cover -html coverage.out -o coverage.html
 
-bench: *_test.go
+bench:
 	go test -bench=. -benchmem -count=10 > benchstat.txt
 
 benchstat.old.txt: benchstat.txt
@@ -43,7 +43,4 @@ fuzz: *_test.go
 
 # App commands
 run-api:
-	go run ./api/main.go
-
-tunnel:
-	ngrok http --domain=cricket-rational-pika.ngrok-free.app 4321
+	go run ./main.go

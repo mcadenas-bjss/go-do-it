@@ -11,6 +11,13 @@ Options:
 - `-port` default is 8000
 - `-db` default is "todo.db"
 
+### Scripts
+
+- GET one by id e.g. `./scripts/get.sh 1`
+- INSERT `.scripts/insert.sh`
+- UPDATE description by id e.g. `.scripts/update.sh 1 "new description"`
+- DELETE one by id e.g. `.scripts/delete.sh 1`
+
 ## WebApp
 
 The web app is built with [Astro](https://docs.astro.build/en/getting-started/) and [HTMX](https://thevalleyofcode.com/htmx).
