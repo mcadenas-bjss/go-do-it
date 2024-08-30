@@ -55,8 +55,6 @@ func NewDbTodoStore(file string) (*DbTodoStore, error) {
 			insert.Exec("2020-01-01T00:00:00Z", "test", false)
 		}
 		rows.Close()
-	} else {
-		return nil, err
 	}
 
 	return &DbTodoStore{
@@ -229,8 +227,8 @@ func (t *DbTodoStore) insert(ctx context.Context, todo Todo) (int, error) {
 	logger.Info("Inserting todo", todo)
 
 	return withContext(ctx, func() (int, error) {
-		t.lock.Lock()
-		defer t.lock.Unlock()
+		// t.lock.Lock()
+		// defer t.lock.Unlock()
 		res, err := t.db.ExecContext(ctx, "INSERT INTO todo VALUES(NULL,?,?,?);", todo.Time, todo.Description, todo.Completed)
 		if err != nil {
 			logger.Error("Error: %s", err)

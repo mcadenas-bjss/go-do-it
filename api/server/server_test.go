@@ -130,7 +130,7 @@ func TestHealth(t *testing.T) {
 	server := server.NewTodoServer(&StubStore{})
 
 	t.Run("it returns 200 on /health", func(t *testing.T) {
-		request, _ := http.NewRequest("GET", "/health", nil)
+		request, _ := http.NewRequest("GET", "/api/health", nil)
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
@@ -215,7 +215,7 @@ func TestCRUD(t *testing.T) {
 
 		todoServer.ServeHTTP(response, request)
 
-		assertStatus(t, response.Code, http.StatusCreated)
+		assertStatus(t, response.Code, http.StatusOK)
 
 		if len(stubStore.todos) != 3 {
 			t.Errorf("Expected 3 todos, got %d", len(stubStore.todos))
@@ -253,21 +253,21 @@ func assertJson[T any](t testing.TB, j *bytes.Buffer, got T) {
 	}
 }
 
-// func BenchmarkGet(b *testing.B) {
-// 	stubStore := StubStore{
-// 		map[int]store.Todo{
-// 			1: {Id: 1, Time: "2024-01-01T00:00:00.000Z", Description: "Buy milk", Completed: false},
-// 			2: {Id: 2, Time: "2024-01-01T00:00:00.000Z", Description: "Buy bread", Completed: true},
-// 		},
-// 	}
+func BenchmarkGet(b *testing.B) {
+	stubStore := StubStore{
+		map[int]store.Todo{
+			1: {Id: 1, Time: "2024-01-01T00:00:00.000Z", Description: "Buy milk", Completed: false},
+			2: {Id: 2, Time: "2024-01-01T00:00:00.000Z", Description: "Buy bread", Completed: true},
+		},
+	}
 
-// 	todoServer := server.NewTodoServer(&stubStore)
+	todoServer := server.NewTodoServer(&stubStore)
 
-// 	b.ResetTimer()
-// 	for i := 0; i < b.N; i++ {
-// 		request, _ := http.NewRequest("GET", fmt.Sprintf("/todo/%d", 1), nil)
-// 		response := httptest.NewRecorder()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		request, _ := http.NewRequest("GET", fmt.Sprintf("/api/todo/%d", 1), nil)
+		response := httptest.NewRecorder()
 
-// 		todoServer.ServeHTTP(response, request)
-// 	}
-// }
+		todoServer.ServeHTTP(response, request)
+	}
+}
