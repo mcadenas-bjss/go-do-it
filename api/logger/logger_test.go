@@ -2,6 +2,7 @@ package logger_test
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/mcadenas-bjss/go-do-it/logger"
@@ -51,6 +52,7 @@ func TestStandardLoggers(t *testing.T) {
 				log.Info(tt.message)
 			}
 			got := buffer.String()
+			buffer.Reset()
 
 			assertLogMessage(t, got, tt.level, tt.message)
 		})
@@ -89,7 +91,8 @@ func TestFormattedLoggers(t *testing.T) {
 			}
 			got := buffer.String()
 
-			assertLogMessage(t, got, tt.level, tt.message)
+			assertLogMessage(t, got, tt.level, fmt.Sprintf(tt.message, tt.args...))
+			buffer.Reset()
 		})
 	}
 }
