@@ -1,0 +1,15 @@
+# WASM GO
+
+[docs](https://go.dev/wiki/WebAssembly)
+
+## Compile
+
+`GOOS=js GOARCH=wasm go build -o ./dist/main.wasm`
+
+## Serve
+
+`npx serve ./dist`
+
+## Run
+
+Open localhost url indicated by serve command. In the console use `sayHello(<string>)`.
