@@ -10,7 +10,37 @@
       ).then((result) => {
         go.run(result.instance);
       });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const list = document.getElementById("todo-list");
+        document.getElementById("load").addEventListener("click", async () => {
+          console.log("click");
+          const todos = await getTodos();
+          if (!todos.length) {
+            window.alert("Nothing to see.");
+            return;
+          }
+
+          entries = todos.map((t) => newEntry(t));
+
+          entries.forEach((e) => list.append(e));
+        });
+      });
+
+      function newEntry(todo) {
+        let li = document.createElement("li");
+        li.innerText = `${todo.title} - ${todo.completed ? "Done" : "Pending"}`;
+        return li;
+      }
     </script>
+    <style></style>
   </head>
-  <body></body>
+  <body>
+    <script></script>
+    <main>
+      <h1>Go do it.</h1>
+      <ul id="todo-list"></ul>
+      <button id="load">Load</button>
+    </main>
+  </body>
 </html>
